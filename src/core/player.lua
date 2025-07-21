@@ -35,7 +35,7 @@ function Player:update(dt)
         end
     end
 
-    -- while moving, move towards the target with interpolation (lerp)
+    -- while moving, move towards the target with linear interpolation
     if self.isMoving then
         local dx = self.targetX - self.x
         local dy = self.targetY - self.y
