@@ -1,7 +1,7 @@
-local const = require("src.const")
+local const = require("src.helpers.const")
 local Player = require("src.core.player")
 local Camera = require("src.core.camera")
-local utils  = require("src.utils")
+local utils  = require("src.helpers.utils")
 
 local canvas
 local scale, offsetX, offsetY = 1, 0, 0

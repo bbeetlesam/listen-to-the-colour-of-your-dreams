@@ -5,7 +5,7 @@ local utils = {
 
     lines = function (points, color)
         love.graphics.push("all")
-        love.graphics.setLineWidth(require("src.const").LINE_WIDTH)
+        love.graphics.setLineWidth(require("src.helpers.const").LINE_WIDTH)
         love.graphics.setColor(color or {0, 0, 0})
         love.graphics.line(points)
         love.graphics.pop()

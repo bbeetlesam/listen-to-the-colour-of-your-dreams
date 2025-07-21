@@ -1,4 +1,4 @@
-local const = require("src.const")
+local const = require("src.helpers.const")
 
 local Camera = {}
 
