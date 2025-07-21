@@ -66,7 +66,7 @@ function love.draw()
         love.graphics.clear(const.BROKEN_WHITE)
 
         Camera:attach()
-            stairs(0, 0, 20, 30, 4, "right")
+            stairs(0, 0, 20, 32, 4, "right")
             utils.lines({-200,0, 0,0})
             Player:draw()
             love.graphics.setColor(const.BLACK)
