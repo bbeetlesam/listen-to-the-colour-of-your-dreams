@@ -1,8 +1,6 @@
-local Camera = require("src.core.camera")
 local Canvas = require("src.canvas")
-local Player = require("src.core.player")
 local const = require("src.helpers.const")
-local utils  = require("src.helpers.utils")
+local acts = require("src.acts")
 
 local mainCanvas = {}
 
@@ -25,31 +23,18 @@ function mainCanvas:load()
 
     self:fitToScreenCanvas()
 
-    Player:load(-15, -15, true)
-    Camera:load(0, 0, const.WIDTH, const.HEIGHT, 1)
+    acts:load("beginning")
 end
 
 function mainCanvas:update(dt)
-    Player:update(dt)
+    acts:update(dt)
 
-    local px, py = Player:getPosition()
-    Camera:setPosition(px, py - 100)
-
-    print(Player:getPosition())
+    print(require("src.core.player"):getPosition())
 end
 
 function mainCanvas:draw()
     self.canvas:drawTo("main", function ()
-        love.graphics.clear(const.BROKEN_WHITE)
-
-        Camera:attach()
-            utils.drawStairs(0, 0, 20)
-            utils.lines({-200,0, 0,0})
-            Player:draw()
-            love.graphics.setColor(const.BLACK)
-            love.graphics.points(0,0)
-            love.graphics.setColor(1, 1, 1)
-        Camera:detach()
+        acts:draw()
     end)
 
     self.canvas:drawAll({"main"})
