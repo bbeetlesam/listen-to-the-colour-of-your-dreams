@@ -3,6 +3,8 @@ local states = require("src.states")
 local Acts = require("src.acts")
 
 function love.load()
+    require("src.sounds").load()
+
     mainCanvas:load()
 end
 
