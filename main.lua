@@ -1,5 +1,6 @@
 local mainCanvas = require("src.core.main-canvas")
 local states = require("src.states")
+local Acts = require("src.acts")
 
 function love.load()
     mainCanvas:load()
@@ -14,13 +15,14 @@ function love.draw()
     mainCanvas:draw()
 end
 
-function love.keypressed(key, _, _)
+function love.keypressed(key, _, isrepeat)
     if key == "escape" then
         love.event.quit()
     elseif key == "f11" then
         states.fullscreen = not states.fullscreen
         love.window.setFullscreen(states.fullscreen)
     end
+    Acts:keypressed(key, isrepeat)
 end
 
 function love.resize(w, h)

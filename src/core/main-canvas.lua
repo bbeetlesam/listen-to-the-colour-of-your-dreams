@@ -1,10 +1,13 @@
 local Canvas = require("src.canvas")
+local Player = require("src.core.player")
+local Camera = require("src.core.camera")
+local Acts = require("src.acts")
 local const = require("src.helpers.const")
-local acts = require("src.acts")
+local states = require("src.states")
 
 local mainCanvas = {}
 
-function mainCanvas:fitToScreenCanvas()
+function mainCanvas:fitToScreen()
     local canvasW, canvasH = self.canvas:getSize("main")
     local windowW, windowH = love.graphics.getDimensions()
 
@@ -21,27 +24,34 @@ function mainCanvas:load()
     self.canvas = Canvas:new()
     self.canvas:addNew("main", const.WIDTH, const.HEIGHT, {})
 
-    self:fitToScreenCanvas()
+    self:fitToScreen()
 
-    acts:load("beginning")
+    Player:load()
+    Camera:load(0, 0, const.WIDTH, const.HEIGHT, 1)
+
+    Acts:load("going-home")
 end
 
 function mainCanvas:update(dt)
-    acts:update(dt)
-
-    print(require("src.core.player"):getPosition())
+    Acts:update(dt)
 end
 
 function mainCanvas:draw()
+    love.graphics.clear(states.lineColor)
     self.canvas:drawTo("main", function ()
-        acts:draw()
+        love.graphics.clear(states.bgColor)
+
+        -- debug grid
+        -- require("src.helpers.utils").drawGrid(32)
+
+        Acts:draw()
     end)
 
     self.canvas:drawAll({"main"})
 end
 
 function mainCanvas:resize(_, _)
-    self:fitToScreenCanvas()
+    self:fitToScreen()
 end
 
 -- for external uses
