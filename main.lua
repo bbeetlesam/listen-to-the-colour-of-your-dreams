@@ -7,6 +7,7 @@ end
 
 function love.update(dt)
     mainCanvas:update(dt)
+    states.update(dt)
 end
 
 function love.draw()
