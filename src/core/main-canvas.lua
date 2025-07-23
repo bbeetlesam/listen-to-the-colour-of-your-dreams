@@ -42,10 +42,10 @@ function mainCanvas:draw()
         love.graphics.clear(states.bgColor)
 
         -- debug grid
-        -- require("src.helpers.utils").drawGrid(32)
+        require("src.helpers.utils").drawGrid(32)
 
         Acts:draw()
-        require("src.dialogues").draw()
+        require("src.dialogues"):draw()
     end)
 
     self.canvas:drawAll({"main"})

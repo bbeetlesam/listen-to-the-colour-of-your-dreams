@@ -5,7 +5,7 @@ local dialogues = require("src.dialogues")
 
 function love.load()
     require("src.sounds").load()
-    dialogues.load()
+    dialogues:load()
 
     mainCanvas:load()
 end
@@ -13,7 +13,7 @@ end
 function love.update(dt)
     mainCanvas:update(dt)
     states.update(dt)
-    dialogues.update(dt)
+    dialogues:update(dt)
 end
 
 function love.draw()
