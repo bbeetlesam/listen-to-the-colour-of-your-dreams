@@ -46,6 +46,14 @@ local utils = {
             love.graphics.arc("line", "open", x + 13, y - const.TILE_SIZE*2, 12, 0, -math.pi)
             love.graphics.pop()
         end,
+
+        lines = function (points, width, color)
+            love.graphics.push("all")
+            love.graphics.setLineWidth(width or require("src.helpers.const").LINE_WIDTH)
+            love.graphics.setColor(color or require("src.states").lineColor)
+            love.graphics.line(points)
+            love.graphics.pop()
+        end,
     },
 
     rgb = function (r, g, b, a)
@@ -71,6 +79,15 @@ local utils = {
 
     coordStr = function (x, y)
         return x .. "," .. y
+    end,
+
+    isValueAround = function (value, lower, upper)
+        return value >= lower and value <= upper
+    end,
+
+    -- ONLY USED FOR DT MEASURED VARIABLES
+    ifTimeIs = function (value, num)
+        return value >= num and value <= num + 0.1
     end,
 }
 
