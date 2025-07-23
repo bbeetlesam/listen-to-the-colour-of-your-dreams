@@ -3,6 +3,7 @@ local const = require("src.helpers.const")
 local Player = {}
 
 Player.walls = {} -- using a table as a set for fast lookups. Key format: "x,y"
+Player.hotPositions = {} -- [key] = { right = "movement_type", left = "movement_type" }
 Player.onWallHitCallback = nil
 
 function Player:load(x, y, playable, type)
@@ -20,14 +21,26 @@ function Player:load(x, y, playable, type)
     self.stepSize = 32
 
     self.onWallHitCallback = nil
+    self.hotPositions = {}
 
-    self.image = love.graphics.newImage("assets/img/player0.png")
+    self.image = love.graphics.newImage("assets/img/player-light.png")
     self.stepSound = love.audio.newSource("assets/sfx/" .. "walk-step.wav", "static")
 end
 
 function Player:update(dt)
     -- if not moving, able to move with AWSD
     if not self.isMoving and self.playable then
+        -- Check for hot positions and update movement type if necessary
+        local key = self.x .. "," .. self.y
+        local rules = self.hotPositions[key]
+        if rules then
+            if love.keyboard.isDown("d") and rules.right then
+                self:setMovement(rules.right)
+            elseif love.keyboard.isDown("a") and rules.left then
+                self:setMovement(rules.left)
+            end
+        end
+
         local moveX, moveY = 0, 0
         if love.keyboard.isDown("d") then
             if self.movement == "diagonal" then
@@ -88,12 +101,16 @@ function Player:update(dt)
 end
 
 function Player:draw()
+    local states = require("src.states")
+    local r, g, b, a = unpack(states.lineColor)
+
     love.graphics.push("all")
+    love.graphics.setColor(r, g, b, a)
     love.graphics.draw(self.image, self.x - 0, self.y + 16, 0, 1/2*self.direction, 1/2, self.image:getWidth()/2, self.image:getHeight())
 
     -- collider debug
     -- love.graphics.setColor(1,0,0)
-    -- love.graphics.rectangle("line", self.x-16, self.y-16, 32, 32)
+    -- love.graphics.circle("line", self.x, self.y, 8)
     love.graphics.pop()
 end
 
@@ -147,6 +164,21 @@ function Player:drawWallDebug()
     love.graphics.pop()
 end
 
+-- for debugging
+function Player:drawHotPositionDebug()
+    love.graphics.push("all")
+    love.graphics.setColor(0, 0, 1, 0.8) -- Blue for hot positions
+    for key, _ in pairs(self.hotPositions) do
+        local parts = {}
+        for part in string.gmatch(key, "[^,]+") do
+            table.insert(parts, tonumber(part))
+        end
+        local x, y = parts[1], parts[2]
+        love.graphics.circle("fill", x, y, 8)
+    end
+    love.graphics.pop()
+end
+
 function Player:clearWalls(...)
     local indices_to_remove = {...}
     if #indices_to_remove > 0 then
@@ -162,6 +194,16 @@ function Player:onWallHit(callback)
     self.onWallHitCallback = callback
 end
 
+---@param rules table { right : "linear"|"diagonal", left : "linear"|"diagonal" }
+function Player:addHotPosition(x, y, rules)
+    local key = x .. "," .. y
+    self.hotPositions[key] = rules
+end
+
+function Player:clearHotPositions()
+    self.hotPositions = {}
+end
+
 -- type: "diagonal" or "linear"
 function Player:setMovement(type)
     self.movement = type or "diagonal"
@@ -174,6 +216,11 @@ function Player:setPlayer(x, y, playable, type)
     self.targetY = self.y
     self.playable = playable
     self.movement = type or "diagonal"
+    self.direction = -1
+end
+
+function Player:setPlayable(bool)
+    self.playable = bool
 end
 
 return Player
