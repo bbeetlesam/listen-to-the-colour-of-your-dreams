@@ -45,6 +45,7 @@ function mainCanvas:draw()
         -- require("src.helpers.utils").drawGrid(32)
 
         Acts:draw()
+        require("src.dialogues").draw()
     end)
 
     self.canvas:drawAll({"main"})

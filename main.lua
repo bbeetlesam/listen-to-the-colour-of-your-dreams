@@ -1,9 +1,11 @@
 local mainCanvas = require("src.core.main-canvas")
 local states = require("src.states")
 local Acts = require("src.acts")
+local dialogues = require("src.dialogues")
 
 function love.load()
     require("src.sounds").load()
+    dialogues.load()
 
     mainCanvas:load()
 end
@@ -11,6 +13,7 @@ end
 function love.update(dt)
     mainCanvas:update(dt)
     states.update(dt)
+    dialogues.update(dt)
 end
 
 function love.draw()
