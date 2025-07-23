@@ -20,7 +20,8 @@ function Interactables:add(id, x, y, options)
         type = options.type or 'callout',
         onInteract = options.onInteract,
         state = options.initialState or false,
-        promptMessage = options.promptMessage
+        promptMessage = options.promptMessage,
+        isActive = options.isActive
     }
 end
 
@@ -40,9 +41,11 @@ function Interactables:getInteractableObject()
     local targetY = py
 
     for _, obj in pairs(self.objects) do
-        if targetX >= obj.x and targetX < (obj.x + obj.w) and
-           targetY >= obj.y and targetY < (obj.y + obj.h) then
-            return obj
+        if obj.isActive then
+            if targetX >= obj.x and targetX < (obj.x + obj.w) and
+               targetY >= obj.y and targetY < (obj.y + obj.h) then
+                return obj
+            end
         end
     end
 
@@ -79,6 +82,18 @@ end
 
 function Interactables:setPrompt(id, message)
     self.objects[id].promptMessage = message
+end
+
+function Interactables:activate(id)
+    if self.objects[id] then
+        self.objects[id].isActive = true
+    end
+end
+
+function Interactables:deactivate(id)
+    if self.objects[id] then
+        self.objects[id].isActive = false
+    end
 end
 
 -- for debugging
