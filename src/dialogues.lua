@@ -19,8 +19,9 @@ local dialogues = {
     act2 = {
         "Jesus Mother Mary...",
         "Bet it's that trippy bollocks Bob brought over yesterday. Should've known better.",
-        "Holy Walrus... Stairs? Going down?",
+        "Holy Walrus... Stairway to Hell?",
         "Oh man, I'm definitely on something... cheers, Bob...",
+        "How much bloody longer 'til I hit the bottom, huh?",
     }
 }
 
