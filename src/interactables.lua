@@ -1,3 +1,6 @@
+local Player = require("src.core.player")
+local const = require("src.helpers.const")
+
 ---@class Interactables
 local Interactables = {}
 
@@ -8,7 +11,7 @@ function Interactables:clear()
 end
 
 ---@param options table
----{ type = 'callout'|'toggle', onInteract = function, initialState = boolean, w = number, h = number }
+---{ type = 'callout'|'toggle', onInteract = function, initialState = boolean, w = number, h = number, detectionMethod = 'facing'|'on_spot' }
 function Interactables:add(id, x, y, options)
     options = options or {}
     self.objects[id] = {
@@ -17,6 +20,7 @@ function Interactables:add(id, x, y, options)
         y = y,
         w = options.w or 32,
         h = options.h or 32,
+        detectionMethod = options.detectionMethod or 'facing',
         type = options.type or 'callout',
         onInteract = options.onInteract,
         state = options.initialState or false,
@@ -28,23 +32,29 @@ end
 --- finds the closest valid object the player can interact with
 ---@return table|nil the interactable object table, or nil if none is in range
 function Interactables:getInteractableObject()
-    local Player = require("src.core.player")
-    local const = require("src.helpers.const")
     local px, py = Player:getPosition()
     local pDir = Player:getDirectionX()
 
-    -- a check for 0 is good practice
-    if pDir == 0 then return nil end
-
-    -- calculate the position of the tile the player is facing
-    local targetX = px + pDir * const.TILE_SIZE
-    local targetY = py
+    -- Calculate the facing position once, for 'facing' type interactables
+    local targetX, targetY
+    if pDir ~= 0 then
+        targetX = px + pDir * const.TILE_SIZE
+        targetY = py
+    end
 
     for _, obj in pairs(self.objects) do
         if obj.isActive then
-            if targetX >= obj.x and targetX < (obj.x + obj.w) and
-               targetY >= obj.y and targetY < (obj.y + obj.h) then
-                return obj
+            if obj.detectionMethod == 'on_spot' then
+                -- Point-based: Player must be ON the exact spot.
+                if px == obj.x and py == obj.y then
+                    return obj
+                end
+            else -- Default to 'facing'
+                -- Area-based: Player must be FACING the object's area.
+                if targetX and targetX >= obj.x and targetX < (obj.x + obj.w) and
+                   targetY >= obj.y and targetY < (obj.y + obj.h) then
+                    return obj
+                end
             end
         end
     end
@@ -100,12 +110,20 @@ end
 function Interactables:drawDebug()
     love.graphics.push("all")
     for _, obj in pairs(self.objects) do
-        -- Draw the collider box
-        love.graphics.setColor(0, 1, 0, 0.4)
-        love.graphics.rectangle("fill", obj.x, obj.y, obj.w, obj.h)
-        love.graphics.setColor(0, 1, 0, 1)
-        love.graphics.setLineWidth(1)
-        love.graphics.rectangle("line", obj.x, obj.y, obj.w, obj.h)
+        if obj.isActive then
+            if obj.detectionMethod == 'on_spot' then
+                -- Draw a circle for point-based interactables
+                love.graphics.setColor(0, 1, 1, 0.8)
+                love.graphics.circle("fill", obj.x, obj.y, 8)
+            else
+                -- Draw the collider box for area-based interactables
+                love.graphics.setColor(0, 1, 1, 0.4)
+                love.graphics.rectangle("fill", obj.x, obj.y, obj.w, obj.h)
+                love.graphics.setColor(0, 1, 1, 1)
+                love.graphics.setLineWidth(1)
+                love.graphics.rectangle("line", obj.x, obj.y, obj.w, obj.h)
+            end
+        end
     end
     love.graphics.pop()
 end
