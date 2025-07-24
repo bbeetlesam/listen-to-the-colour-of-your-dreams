@@ -4,6 +4,7 @@ local Player = {}
 
 Player.walls = {} -- using a table as a set for fast lookups. Key format: "x,y"
 Player.hotPositions = {} -- [key] = { right = "movement_type", left = "movement_type" }
+Player.triggers = {}
 Player.onWallHitCallback = nil
 
 function Player:load(x, y, playable, type)
@@ -22,12 +23,24 @@ function Player:load(x, y, playable, type)
 
     self.onWallHitCallback = nil
     self.hotPositions = {}
+    self.triggers = {}
 
     self.image = love.graphics.newImage("assets/img/player-light.png")
     self.stepSound = love.audio.newSource("assets/sfx/" .. "walk-step.wav", "static")
 end
 
 function Player:update(dt)
+    -- Update active triggers first
+    for _, trigger in pairs(self.triggers) do
+        if trigger.isActive then
+            trigger.timer = trigger.timer + dt
+            if trigger.onUpdate then
+                -- The onUpdate function can set isActive to false to stop the trigger
+                trigger.onUpdate(trigger, dt, trigger.timer)
+            end
+        end
+    end
+
     -- if not moving, able to move with AWSD
     if not self.isMoving and self.playable then
         -- Check for hot positions and update movement type if necessary
@@ -61,6 +74,13 @@ function Player:update(dt)
         end
 
         if moveX ~= 0 then
+            -- Player is about to move. Check if they are leaving a trigger spot.
+            local currentKey = self.x .. "," .. self.y
+            local leavingTrigger = self.triggers[currentKey]
+            if leavingTrigger then
+                leavingTrigger.playerIsOnSpot = false
+            end
+
             local nextX = self.x + moveX * self.stepSize
             local nextY = self.y + moveY * self.stepSize
 
@@ -87,6 +107,21 @@ function Player:update(dt)
             self.x, self.y = self.targetX, self.targetY -- snap to the final position
             self.isMoving = false
 
+            -- Player has just landed. Check for triggers at the new position.
+            local newKey = self.x .. "," .. self.y
+            local landingTrigger = self.triggers[newKey]
+            if landingTrigger then
+                if landingTrigger.mode == 'once' and not landingTrigger.hasBeenTriggered then
+                    landingTrigger.hasBeenTriggered = true
+                    landingTrigger.isActive = true
+                    landingTrigger.timer = 0
+                elseif landingTrigger.mode == 'onEnter' and not landingTrigger.playerIsOnSpot then
+                    landingTrigger.playerIsOnSpot = true
+                    landingTrigger.isActive = true
+                    landingTrigger.timer = 0
+                end
+            end
+
             -- add stepping sound
             self.stepSound:play()
             self.stepSound:setVolume(0.3)
@@ -100,7 +135,7 @@ function Player:update(dt)
     end
 end
 
-function Player:draw()
+function Player:draw(bool)
     local states = require("src.states")
     local r, g, b, a = unpack(states.lineColor)
 
@@ -109,8 +144,10 @@ function Player:draw()
     love.graphics.draw(self.image, self.x - 0, self.y + 16, 0, 1/2*self.direction, 1/2, self.image:getWidth()/2, self.image:getHeight())
 
     -- collider debug
-    -- love.graphics.setColor(1,0,0)
-    -- love.graphics.circle("line", self.x, self.y, 8)
+    if bool then
+        love.graphics.setColor(1,0,0)
+        love.graphics.circle("line", self.x, self.y, 8)
+    end
     love.graphics.pop()
 end
 
@@ -141,6 +178,11 @@ function Player:addWall(x, y, w, h)
     end
 end
 
+function Player:removeHotPosition(x, y)
+    local key = x .. "," .. y
+    self.hotPositions[key] = nil
+end
+
 function Player:isWallAt(x, y)
     local step = const.TILE_SIZE
     local gridX = math.floor(x / step) * step
@@ -167,7 +209,7 @@ end
 -- for debugging
 function Player:drawHotPositionDebug()
     love.graphics.push("all")
-    love.graphics.setColor(0, 0, 1, 0.8) -- Blue for hot positions
+    love.graphics.setColor(0, 0, 1, 0.8) -- Blue
     for key, _ in pairs(self.hotPositions) do
         local parts = {}
         for part in string.gmatch(key, "[^,]+") do
@@ -175,6 +217,23 @@ function Player:drawHotPositionDebug()
         end
         local x, y = parts[1], parts[2]
         love.graphics.circle("fill", x, y, 8)
+    end
+    love.graphics.pop()
+end
+
+-- for debugging
+function Player:drawTriggerDebug()
+    love.graphics.push("all")
+    love.graphics.setColor(0, 1, 0, 0.8) -- Green
+    for key, _ in pairs(self.triggers) do
+        local parts = {}
+        for part in string.gmatch(key, "[^,]+") do
+            table.insert(parts, tonumber(part))
+        end
+        local x, y = parts[1], parts[2]
+        if x and y then
+            love.graphics.circle("fill", x, y, 8)
+        end
     end
     love.graphics.pop()
 end
@@ -200,6 +259,32 @@ function Player:addHotPosition(x, y, rules)
     self.hotPositions[key] = rules
 end
 
+---@param options table { onUpdate = fun(trigger:table, dt:number, timer:number), mode = "once"|"onEnter" }
+function Player:addTrigger(x, y, options)
+    local key = x .. "," .. y
+    local newTrigger = {
+        key = key,
+        onUpdate = options.onUpdate,
+        mode = options.mode or 'onEnter',
+        -- state
+        isActive = false,
+        hasBeenTriggered = false,
+        playerIsOnSpot = false,
+        timer = 0
+    }
+    self.triggers[key] = newTrigger
+
+    -- immediately activate the trigger if the player is already on the spot when it's created
+    -- fixes triggers at the start of an act
+    if self.x == x and self.y == y then
+        if newTrigger.mode == 'once' and not newTrigger.hasBeenTriggered then
+            newTrigger.hasBeenTriggered, newTrigger.isActive, newTrigger.timer = true, true, 0
+        elseif newTrigger.mode == 'onEnter' and not newTrigger.playerIsOnSpot then
+            newTrigger.playerIsOnSpot, newTrigger.isActive, newTrigger.timer = true, true, 0
+        end
+    end
+end
+
 function Player:clearHotPositions()
     self.hotPositions = {}
 end
@@ -207,6 +292,10 @@ end
 -- type: "diagonal" or "linear"
 function Player:setMovement(type)
     self.movement = type or "diagonal"
+end
+
+function Player:clearTriggers()
+    self.triggers = {}
 end
 
 function Player:setPlayer(x, y, playable, type)
@@ -221,6 +310,12 @@ end
 
 function Player:setPlayable(bool)
     self.playable = bool
+end
+
+function Player:getPosF()
+    local n = self.x / 32
+    local m = self.y / 32
+    return "32*" .. tostring(n) .. ", " .. "32*" .. tostring(m)
 end
 
 return Player
