@@ -308,8 +308,16 @@ function Player:setPlayer(x, y, playable, type)
     self.direction = -1
 end
 
+function Player:setDirection(str)
+    self.direction = str == "right" and 1 or str == "left" and -1 or -1
+end
+
 function Player:setPlayable(bool)
     self.playable = bool
+end
+
+function Player:setSpeed(speed)
+    self.speed = speed or 150
 end
 
 function Player:getPosF()
