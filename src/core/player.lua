@@ -14,18 +14,18 @@ function Player:load(x, y, playable, type)
     self.targetY = self.y
 
     self.playable = playable
-    self.movement = type or "diagonal"
+    self.movement = type or "linear"
     self.direction = -1
 
     self.isMoving = false
-    self.speed = 400 -- 150 - higher is faster
+    self.speed = 150 -- higher is faster
     self.stepSize = 32
 
     self.onWallHitCallback = nil
     self.hotPositions = {}
     self.triggers = {}
 
-    self.image = love.graphics.newImage("assets/img/player-light.png")
+    self.image = love.graphics.newImage("assets/img/player-light-bold.png")
     self.stepSound = love.audio.newSource("assets/sfx/" .. "walk-step.wav", "static")
 end
 
@@ -306,6 +306,11 @@ function Player:setPlayer(x, y, playable, type)
     self.playable = playable
     self.movement = type or "diagonal"
     self.direction = -1
+end
+
+function Player:setPosition(x, y)
+    self.x = x
+    self.y = y
 end
 
 function Player:setDirection(str)
