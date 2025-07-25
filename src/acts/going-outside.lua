@@ -15,7 +15,7 @@ local act = {}
 -- }
 
 function act:load()
-    -- Player:setPlayer(32*-38.5, 32*-0.5, nil, "linear") -- for debugging
+    -- Player:setPlayer(32*10.5, 32*-0.5, 1, "linear") -- for debugging
     Player:clearWalls()
     Player:addWall(32*-40, 32*-1) -- house wall
 
@@ -79,8 +79,8 @@ function act:load()
     -- a hard day's night?? act
     Player:addTrigger(32*120.5, 32*69.5, {
         mode = 'once',
-        onUpdate = function(_, _, _)
-            require("src.acts"):load("crowd-chasing")
+        onUpdate = function(trigger, _, _)
+            if trigger then require("src.acts"):load("crowd-chase") end
         end
     })
 
@@ -103,6 +103,7 @@ function act:draw()
         -- stuff
         utils.draw.mailbox(32*-36.5, 0)
         utils.draw.lines({-32*40,0, -32*40,32*-4}, 8) -- door outline
+        utils.draw.arrowSign(32*135, 32*70, 1)
 
         utils.draw.stairs(32*30, 0, 70)
 

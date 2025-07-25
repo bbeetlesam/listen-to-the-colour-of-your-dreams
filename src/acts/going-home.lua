@@ -21,6 +21,7 @@ function act:load()
     Player:addWall(32*-41, 32*-1, 2, 1) -- door wall
     Player:addWall(32*-60, 32*-3, 6, 3) -- bed wall
 
+    Player:clearTriggers()
     Player:clearHotPositions()
     Player:setPlayer(16*1, -16*1, true, "linear")
     Camera:setPosition(-16*0, 0)
@@ -44,7 +45,7 @@ function act:load()
     Interactables:add("door", 32*-41, 32*-1, {
         type = 'toggle',
         w = 32*2, h = 32, isActive = true,
-        promptMessage = "[ENTER] to Sleep.",
+        promptMessage = "[ENTER] to Open.",
         onInteract = function(isOpen)
             if not self.enterHouse then
                 self.enterHouse = true
@@ -97,7 +98,7 @@ function act:update(dt)
         self.timer = self.timer + dt
         self.playable = false
 
-        if self.timer >= 7 then self.colorProgress = self.colorProgress - dt*0.4 end
+        if self.timer >= 7 then self.colorProgress = self.colorProgress - dt*0.45 end
         if self.timer >= 22.75 then self.playable = true end
         if utils.isValueAround(self.timer, 3.5, 3.6) then dialogue:showTemporary(dialogue.act1[3], 3.5)
         elseif utils.isValueAround(self.timer, 12, 12.1) then dialogue:showTemporary(dialogue.act1[4], 3.5)
@@ -116,8 +117,6 @@ function act:update(dt)
     end
     states.bgColor = utils.lerpColor(const.BROKEN_WHITE, const.BLACK, self.colorProgress)
     states.lineColor = utils.lerpColor(const.BLACK, const.BROKEN_WHITE, self.colorProgress)
-
-    print(Player:getPosition())
 end
 
 function act:draw()
