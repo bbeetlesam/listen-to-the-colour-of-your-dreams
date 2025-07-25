@@ -54,6 +54,55 @@ local utils = {
             love.graphics.line(points)
             love.graphics.pop()
         end,
+
+        fences = function (x, y, length)
+            love.graphics.push("all")
+            love.graphics.setLineWidth(require("src.helpers.const").LINE_WIDTH)
+            love.graphics.setColor(require("src.states").lineColor)
+            for i = 0, length - 1 do
+                -- love.graphics.setColor(1, 1, 1)
+                -- love.graphics.rectangle("fill", x + 16 + 32*i - 5, y - 32*1.75, 10, 32*1.75)
+                -- love.graphics.setColor(require("src.states").lineColor)
+                love.graphics.rectangle("line", x + 16 + 32*i - 5, y - 32*1.75, 10, 32*1.75)
+            end
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.rectangle("fill", x, y - 32*0.5 - 5, 32*length, 10)
+            love.graphics.rectangle("fill", x, y - 32*1.2 - 5, 32*length, 10)
+            love.graphics.setColor(require("src.states").lineColor)
+            love.graphics.rectangle("line", x, y - 32*0.5 - 5, 32*length, 10)
+            love.graphics.rectangle("line", x, y - 32*1.2 - 5, 32*length, 10)
+            love.graphics.pop()
+        end,
+
+        arrowSign = function (x, y, directionX)
+            love.graphics.push("all")
+            love.graphics.setLineWidth(require("src.helpers.const").LINE_WIDTH)
+            love.graphics.setColor(require("src.states").lineColor)
+            love.graphics.rectangle("line", x - 5, y - 32*2.25, 10, 32*2.25)
+            if directionX >= 0 then
+                x = x + 3
+                love.graphics.line({x + 18,y - 32*2.25, x - 32,y - 32*2.25, x - 32,y - 32*3, x + 18,y - 32*3, x + 32,y - 32*2.625, x + 18,y - 32*2.25})
+            end
+            love.graphics.pop()
+        end,
+
+        bricks = function (x, y, w, h)
+            love.graphics.push("all")
+            love.graphics.setLineWidth(require("src.helpers.const").LINE_WIDTH)
+            love.graphics.setColor(require("src.states").lineColor)
+            love.graphics.rectangle("line", x, y - h*32, w*32, h*32)
+            for i = 0, h - 1 do
+                for j = 0, w - 1 do
+                    j = j*32
+                    local addX = 0
+                    if i % 2 ~= 0 then addX = 16 end
+                    love.graphics.line(x + addX + j,y - i*32, x + addX + j,y - i*32 - 32)
+                end
+                i = i*32
+                love.graphics.line(x, y - i, x + w*32, y - i)
+            end
+            love.graphics.pop()
+        end,
     },
 
     rgb = function (r, g, b, a)
