@@ -4,7 +4,7 @@ local Interactables = require("src.interactables")
 local const = require("src.helpers.const")
 local utils = require("src.helpers.utils")
 local states = require("src.states")
-local sounds = require("src.sounds")
+local sounds = require("src.core.sounds")
 local dialogue = require("src.dialogues")
 
 ---@class GoOutside : Act
@@ -23,12 +23,12 @@ function act:load()
     Player:clearHotPositions()
     -- first stair encounter
     Player:addHotPosition(32*29.5, 32*-0.5, {
-        right = "diagonal",
+        right = "diagonal_normal",
         left = "linear"
     })
     Player:addHotPosition(32*99.5, 32*69.5, {
         right = "linear",
-        left = "diagonal"
+        left = "diagonal_normal"
     })
 
     -- initial cutscene after going outside

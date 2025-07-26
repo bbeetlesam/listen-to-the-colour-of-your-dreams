@@ -4,7 +4,7 @@ local Interactables = require("src.interactables")
 local const = require("src.helpers.const")
 local utils = require("src.helpers.utils")
 local states = require("src.states")
-local sounds = require("src.sounds")
+local sounds = require("src.core.sounds")
 local dialogue = require("src.dialogues")
 
 ---@class CrowdChase : Act
@@ -175,10 +175,10 @@ function act:update(dt)
             })
 
             -- move to act 4
-            Player:addTrigger(32*120.5, 32*69.5, {
+            Player:addTrigger(32*115.5, 32*69.5, {
                 mode = 'once',
                 onUpdate = function(trigger, _, _)
-                    if trigger then require("src.acts"):load("going-home") end
+                    if trigger then require("src.acts"):load("bathroom-window") end
                 end
             })
 

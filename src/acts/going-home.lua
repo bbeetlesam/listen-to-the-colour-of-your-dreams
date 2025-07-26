@@ -4,7 +4,7 @@ local Interactables = require("src.interactables")
 local const = require("src.helpers.const")
 local utils = require("src.helpers.utils")
 local states = require("src.states")
-local sounds = require("src.sounds")
+local sounds = require("src.core.sounds")
 local dialogue = require("src.dialogues")
 
 ---@class GoHome : Act
