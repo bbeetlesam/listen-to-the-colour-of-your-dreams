@@ -22,11 +22,21 @@ local dialogues = {
         "Holy Walrus... Stairway to Hell?",
         "Oh man, I'm definitely on something... cheers, Bob...",
         "How much bloody longer 'til I hit the bottom, huh?",
-    }
+    },
+    act3 = {
+        "Bloody hell, what the fuck is that crowd?",
+        "Oh no... they're comin' straight at me!",
+        "Holy shite, a fucking rock?",
+        "You must be kidding me mate",
+        "Mate, you're as slow as a fucking nail. That was bloody close!",
+        "Can't go there? Fuck. I should go back, innit?",
+        "Let's hide on that fucking booth!"
+    },
 }
 
 function dialogues:load()
     self.font = love.graphics.newFont("assets/font/BalsamiqSansRegular.ttf", 25)
+    self.promptFont = love.graphics.newFont("assets/font/BalsamiqSansRegular.ttf", 20)
 end
 
 function dialogues:show(message)
