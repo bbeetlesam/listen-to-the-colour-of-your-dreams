@@ -165,10 +165,6 @@ function act:update(dt)
     if self.heldStacko and love.mouse.isDown(1) then
         self.heldStacko.x = mx - self.heldStacko.offsetX
         self.heldStacko.y = my - self.heldStacko.offsetY
-    elseif self.heldStacko and not love.mouse.isDown(1) then
-        self.heldStacko.x = math.floor(self.heldStacko.x / 32 + 0.5) * 32
-        self.heldStacko.y = math.floor(self.heldStacko.y / 32 + 0.5) * 32
-        self.heldStacko = nil
     end
 end
 
@@ -210,9 +206,6 @@ function act:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-function act:keypressed(key, _)
-end
-
 function act:mousepressed(x, y, button, _, _)
     if button ~= 1 then return end
     local mx, my = require("src.core.main-canvas"):getMouseCanvasPosition()
@@ -235,6 +228,18 @@ function act:mousepressed(x, y, button, _, _)
             end
         end
     end
+end
+
+function act:mousereleased(x, y, button, _, _)
+    if button == 1 and self.heldStacko then
+        -- Snap to grid on release
+        self.heldStacko.x = math.floor(self.heldStacko.x / 32 + 0.5) * 32 - 0
+        self.heldStacko.y = math.floor(self.heldStacko.y / 32 + 0.5) * 32 - 0
+        self.heldStacko = nil
+    end
+end
+
+function act:keypressed(key, _)
 end
 
 return act
