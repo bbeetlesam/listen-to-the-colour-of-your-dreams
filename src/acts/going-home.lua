@@ -12,6 +12,7 @@ local act = {}
 
 local img = {
     door = love.graphics.newImage("assets/img/door.png"),
+    bed = love.graphics.newImage("assets/img/bed.png"),
 }
 
 function act:load()
@@ -136,9 +137,8 @@ function act:draw()
             love.graphics.draw(img.door, 32*-42, 32*-4, 0, 1/2, nil)
             love.graphics.setColor(1, 1, 1)
         end
+        love.graphics.draw(img.bed, 32*-60, 32*-3, 0, 1/2, nil) -- bed
 
-        Interactables:drawDebug()
-        Player:drawWallDebug()
         Player:draw()
 
         -- game title

@@ -13,6 +13,7 @@ local act = {}
 local img = {
     rock = love.graphics.newImage("assets/img/rock.png"),
     phonebooth = love.graphics.newImage("assets/img/phonebooth.png"),
+    crowd = love.graphics.newImage("assets/img/crowd.png"),
 }
 
 function act:load()
@@ -29,6 +30,8 @@ function act:load()
         onUpdate = function(trigger, _, timer)
             if not trigger.started then
                 Player:setPlayable(false); trigger.started = true
+                sounds.crowd:setLooping(true)
+                sounds.crowd:play()
             end
             if not trigger.d1 and timer >= 1 then
                 dialogue:showTemporary(dialogue.act3[1], 3.5); Player:setDirection(-1); trigger.d1 = true
@@ -38,9 +41,9 @@ function act:load()
             end
             if not trigger.playable and timer >= 8.25 then
                 Player:setPlayable(true); trigger.playable = true
-                trigger.isActive = false
                 self.isChasing = true
                 Player:setSpeed(190)
+                trigger.isActive = false
             end
         end
     })
@@ -81,6 +84,7 @@ function act:load()
     self.isHiding = false
     self.isChasing = false
     self.isCaught = false
+    self.isWin = false
     self.crowd = {
         image = nil,
         pos = {x = 32*100, y = 32*70},
@@ -147,20 +151,27 @@ function act:update(dt)
     Player:update(dt)
 
     local px, py = Player:getPosition()
-    Camera:setPosition(math.max(math.min(px, 32*270.5), 32*120.5), py - 32*3)
+    local minX = self.isWin and 32*0.5 or 32*120.5
+    Camera:setPosition(math.max(math.min(px, 32*270.5), minX), py - 32*3)
 
     -- chasing
-    if self.isChasing then
+    if self.isChasing and not self.isCaught then
         self.crowd.pos.x = self.crowd.pos.x + dt * 165
         if self.crowd.pos.x - 32*9 <= px and self.crowd.pos.x >= px + 16 and not self.isHiding then
             self.isCaught = true
         end
+
+        -- crowd sound
+        sounds.crowd:setVolume(0.4)
+        -- print(1 - math.min(math.abs(px - self.crowd.pos.x) / 400, 1))
 
         -- done chasing
         if self.crowd.pos.x >= 32*304 then
             Interactables:activate("phone-booth")
             Player:setSpeed(150)
             dialogue:showTemporary(dialogue.act3[5], 4.5);
+            sounds.crowd:stop()
+            sounds.crowd:setLooping(false)
 
             Player:clearTriggers()
             -- should i go back left
@@ -182,7 +193,24 @@ function act:update(dt)
                 end
             })
 
+            self.isWin = true
             self.isChasing = false
+        end
+    end
+
+    -- if caught
+    if self.isCaught then
+        dialogue:showTemporary("Bloody hell, here we fucking go again...", 4)
+        Player:setPlayable(false)
+        sounds.crowd:stop()
+
+        if love.keyboard.isDown("return") then
+            self.crowd.pos.x = 32*100
+            Player:setPosition(32*120.5, 32*69.5)
+            Player:setPlayable(true)
+            dialogue:hide()
+            self.isChasing = true
+            self.isCaught = false
         end
     end
 end
@@ -209,10 +237,10 @@ function act:draw()
         end
         love.graphics.draw(img.phonebooth, 32*270.5, 32*70 - 2, 0, 1/2, nil, img.phonebooth:getWidth()/2, img.phonebooth:getHeight())
 
-        Interactables:drawDebug()
-        Player:drawWallDebug()
-        Player:drawHotPositionDebug()
-        Player:drawTriggerDebug()
+        -- Interactables:drawDebug()
+        -- Player:drawWallDebug()
+        -- Player:drawHotPositionDebug()
+        -- Player:drawTriggerDebug()
         Player:draw()
 
         -- overlap player if hiding
@@ -222,7 +250,8 @@ function act:draw()
         end
 
         -- the crowd
-        self.crowd.drawRect(self.crowd.pos.x, self.crowd.pos.y)
+        -- self.crowd.drawRect(self.crowd.pos.x, self.crowd.pos.y)
+        love.graphics.draw(img.crowd, self.crowd.pos.x, self.crowd.pos.y, 0, 1/2, nil, img.crowd:getWidth(), img.crowd:getHeight())
     Camera:detach()
 
     -- interactable prompt
@@ -250,7 +279,8 @@ function act:keypressed(key, _)
             if obstacle.hp <= 0 then
                 obstacle.isBroken = true
                 Player:clearWalls(unpack(obstacle.wallKeys))
-                -- sounds.obstacleBreak:play()
+                sounds.rockBoom:play()
+                sounds.rockBoom:setVolume(0.3)
             else
                 sounds.rockHit:play()
                 sounds.rockHit:setVolume(0.35)

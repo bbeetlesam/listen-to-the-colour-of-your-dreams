@@ -10,9 +10,9 @@ local dialogue = require("src.dialogues")
 ---@class GoOutside : Act
 local act = {}
 
--- local img = {
---     door = love.graphics.newImage("assets/img/door-black.png"),
--- }
+local img = {
+    bed = love.graphics.newImage("assets/img/bed.png"),
+}
 
 function act:load()
     -- Player:setPlayer(32*10.5, 32*-0.5, 1, "linear") -- for debugging
@@ -104,13 +104,14 @@ function act:draw()
         utils.draw.mailbox(32*-36.5, 0)
         utils.draw.lines({-32*40,0, -32*40,32*-4}, 8) -- door outline
         utils.draw.arrowSign(32*135, 32*70, 1)
+        love.graphics.draw(img.bed, 32*-60, 32*-3, 0, 1/2, nil) -- bed
 
         utils.draw.stairs(32*30, 0, 70)
 
-        Interactables:drawDebug()
-        Player:drawWallDebug()
-        Player:drawHotPositionDebug()
-        Player:drawTriggerDebug()
+        -- Interactables:drawDebug()
+        -- Player:drawWallDebug()
+        -- Player:drawHotPositionDebug()
+        -- Player:drawTriggerDebug()
         Player:draw()
     Camera:detach()
 end
