@@ -4,6 +4,7 @@
 ---@field draw fun(self:Act)?
 ---@field keypressed fun(self:Act, key:string, isrepeat:boolean)?
 ---@field mousepressed fun(self:Act, x:number, y:number, button:number, _:nil, presses:number)?
+---@field mousereleased fun(self:Act, x:number, y:number, button:number, _:nil, presses:number)?
 ---@field resize fun(self:Act, w:number, h:number)?
 ---@field width number
 ---@field height number
@@ -46,6 +47,12 @@ end
 function Act:mousepressed(x, y, button, _, presses)
     if self.current and self.current.mousepressed then
         self.current:mousepressed(x, y, button, _, presses)
+    end
+end
+
+function Act:mousereleased(x, y, button, _, presses)
+    if self.current and self.current.mousereleased then
+        self.current:mousereleased(x, y, button, _, presses)
     end
 end
 

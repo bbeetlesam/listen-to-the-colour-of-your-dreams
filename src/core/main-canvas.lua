@@ -34,6 +34,7 @@ end
 
 function mainCanvas:update(dt)
     Acts:update(dt)
+    print(Player:getPosF())
 end
 
 function mainCanvas:draw()
@@ -42,7 +43,7 @@ function mainCanvas:draw()
         love.graphics.clear(states.bgColor)
 
         -- debug grid
-        require("src.helpers.utils").drawGrid(32)
+        -- require("src.helpers.utils").drawGrid(32)
 
         Acts:draw()
         require("src.dialogues"):draw()
@@ -58,6 +59,13 @@ end
 -- for external uses
 function mainCanvas:getMainCanvas()
     return self.canvas
+end
+
+function mainCanvas:getMouseCanvasPosition()
+    local mx, my = love.mouse.getPosition()
+    local scaledX = (mx / self.scale) - self.offsetX
+    local scaledY = (my / self.scale) - self.offsetY
+    return scaledX, scaledY
 end
 
 return mainCanvas
