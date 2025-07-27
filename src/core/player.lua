@@ -2,7 +2,7 @@ local const = require("src.helpers.const")
 
 local Player = {}
 
-Player.walls = {} -- using a table as a set for fast lookups. Key format: "x,y"
+Player.walls = {} -- using a table as a set for fast lookups. key format: "x,y"
 Player.hotPositions = {} -- [key] = { right = "movement_type", left = "movement_type" }
 Player.triggers = {}
 Player.onWallHitCallback = nil
@@ -14,7 +14,7 @@ function Player:load(x, y, playable, type)
     self.targetY = self.y
 
     self.playable = playable
-    self.movement = type or "linear"
+    self.movement = type or "linear" -- "linear" | "diagonal_normal" | "diagonal_inverted"
     self.direction = -1
 
     self.isMoving = false
@@ -56,24 +56,21 @@ function Player:update(dt)
 
         local moveX, moveY = 0, 0
         if love.keyboard.isDown("d") then
-            if self.movement == "diagonal" then
-                moveX = 1
-                moveY = 1
-            elseif self.movement == "linear" then
-                moveX = 1
-            end
+            moveX = 1
             self.direction = 1
         elseif love.keyboard.isDown("a") then
-            if self.movement == "diagonal" then
-                moveX = -1
-                moveY = -1
-            elseif self.movement == "linear" then
-                moveX = -1
-            end
+            moveX = -1
             self.direction = -1
         end
 
         if moveX ~= 0 then
+            -- calculate vertical movement based on the current movement type
+            if self.movement == "diagonal_normal" then
+                moveY = moveX
+            elseif self.movement == "diagonal_inverted" then
+                moveY = -moveX
+            end
+
             -- Player is about to move. Check if they are leaving a trigger spot.
             local currentKey = self.x .. "," .. self.y
             local leavingTrigger = self.triggers[currentKey]
@@ -253,7 +250,7 @@ function Player:onWallHit(callback)
     self.onWallHitCallback = callback
 end
 
----@param rules table { right : "linear"|"diagonal", left : "linear"|"diagonal" }
+---@param rules table { right : "linear"|"diagonal_normal"|"diagonal_inverted", left : "linear"|"diagonal_normal"|"diagonal_inverted" }
 function Player:addHotPosition(x, y, rules)
     local key = x .. "," .. y
     self.hotPositions[key] = rules
@@ -289,9 +286,9 @@ function Player:clearHotPositions()
     self.hotPositions = {}
 end
 
--- type: "diagonal" or "linear"
+---@param type table {"linear" | "diagonal_normal" | "diagonal_inverted"}
 function Player:setMovement(type)
-    self.movement = type or "diagonal"
+    self.movement = type or "linear"
 end
 
 function Player:clearTriggers()
@@ -304,7 +301,7 @@ function Player:setPlayer(x, y, playable, type)
     self.targetX = self.x
     self.targetY = self.y
     self.playable = playable
-    self.movement = type or "diagonal"
+    self.movement = type or "linear"
     self.direction = -1
 end
 
