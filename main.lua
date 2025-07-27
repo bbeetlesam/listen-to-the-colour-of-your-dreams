@@ -4,7 +4,7 @@ local Acts = require("src.acts")
 local dialogues = require("src.dialogues")
 
 function love.load()
-    require("src.sounds").load()
+    require("src.core.sounds").load()
     dialogues:load()
 
     mainCanvas:load()
@@ -28,6 +28,14 @@ function love.keypressed(key, _, isrepeat)
         love.window.setFullscreen(states.fullscreen)
     end
     Acts:keypressed(key, isrepeat)
+end
+
+function love.mousepressed(x, y, button, isTouch, presses)
+    Acts:mousepressed(x, y, button, isTouch, presses)
+end
+
+function love.mousereleased(x, y, button, isTouch, presses)
+    Acts:mousereleased(x, y, button, isTouch, presses)
 end
 
 function love.resize(w, h)
