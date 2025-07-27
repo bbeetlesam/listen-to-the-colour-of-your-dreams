@@ -79,9 +79,44 @@ local utils = {
             love.graphics.setLineWidth(require("src.helpers.const").LINE_WIDTH)
             love.graphics.setColor(require("src.states").lineColor)
             love.graphics.rectangle("line", x - 5, y - 32*2.25, 10, 32*2.25)
-            if directionX >= 0 then
-                x = x + 3
-                love.graphics.line({x + 18,y - 32*2.25, x - 32,y - 32*2.25, x - 32,y - 32*3, x + 18,y - 32*3, x + 32,y - 32*2.625, x + 18,y - 32*2.25})
+
+            local dir = directionX >= 0 and 1 or -1
+            local signX = x + (3 * dir)
+            local points = {signX + 18*dir,y - 32*2.25, signX - 32*dir,y - 32*2.25,
+                signX - 32*dir,y - 32*3, signX + 18*dir,y - 32*3,
+                signX + 32*dir,y - 32*2.625, signX + 18*dir,y - 32*2.25
+            }
+            love.graphics.line(points)
+            love.graphics.pop()
+        end,
+
+        dashedLine = function(points, dashLength, gapLength, width, color)
+            dashLength = dashLength or 10
+            gapLength = gapLength or 5
+            color = color or {1, 0.2, 0.2, 0.5}
+            width = width or 4
+
+            love.graphics.push("all")
+            love.graphics.setLineWidth(width)
+            love.graphics.setColor(color)
+            for i = 1, #points - 2, 2 do
+                local x1, y1 = points[i], points[i + 1]
+                local x2, y2 = points[i + 2], points[i + 3]
+
+                local dx, dy = x2 - x1, y2 - y1
+                local len = math.sqrt(dx*dx + dy*dy)
+                local angle = math.atan2(dy, dx)
+                local progress = 0
+
+                while progress < len do
+                    local ax = x1 + math.cos(angle) * progress
+                    local ay = y1 + math.sin(angle) * progress
+                    local bx = x1 + math.cos(angle) * math.min(progress + dashLength, len)
+                    local by = y1 + math.sin(angle) * math.min(progress + dashLength, len)
+
+                    love.graphics.line(ax, ay, bx, by)
+                    progress = progress + dashLength + gapLength
+                end
             end
             love.graphics.pop()
         end,
