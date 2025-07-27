@@ -32,6 +32,24 @@ local dialogues = {
         "Can't go there? Fuck. I should go back, innit?",
         "Let's hide on that fucking booth!"
     },
+    act4 = {
+        "Oi, where've the bloody stairs gone?",
+        "How am I supposed to get back now, eh?",
+        "The Wall.. what a fucking nonsense.",
+        "Damnit, another stairs down...",
+        "\"Um.. hello. Can you help me?\"",
+        "What the fuck?",
+        "\"Um, I want to get inside the house, but I can't...\"",
+        "Just go through the front door, you stupid git!",
+        "\"Um.. yea.. it's locked, and I don't have the key...\"",
+        "I couldn't give a toss. I just want to get out of this shitty trip!",
+        "\"Well, you can't go any further unless you help me though, haha...\"",
+        "Bloody hell.",
+        "\"Just help me climb in through the bathroom window...\"",
+        "The window's on the bloody first floor, you muppet.",
+        "\"That's why, help me stack these stuffs to make a stair.\"",
+        "Ugh.. Bob, look what you've done to my bloody mind..."
+    }
 }
 
 function dialogues:load()

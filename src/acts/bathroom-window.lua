@@ -10,6 +10,10 @@ local dialogue = require("src.dialogues")
 ---@class BathroomWindow : Act
 local act = {}
 
+local img = {
+    npc = love.graphics.newImage("assets/img/player-light-bold.png"),
+}
+
 local function getShapeOffsetCenter(shape)
     local minX, maxX, minY, maxY = math.huge, -math.huge, math.huge, -math.huge
     for _, b in ipairs(shape.blocks) do
@@ -23,12 +27,73 @@ local function getShapeOffsetCenter(shape)
     return centerX, centerY
 end
 
+-- Define the puzzle area boundaries
+local puzzleBounds = {
+    left = 32*-50,
+    right = 32*10,
+    top = 32 * 80,
+    bottom = 32 * 95,
+}
+-- Calculate the slope and intercept of the diagonal boundary line once
+puzzleBounds.slope = (puzzleBounds.bottom - puzzleBounds.top) / (puzzleBounds.right - puzzleBounds.left)
+puzzleBounds.intercept = puzzleBounds.top - puzzleBounds.slope * puzzleBounds.left
+
+--- Converts a shape's local block coordinates to a table of global grid positions.
+local function getGlobalBlockGridPositions(shape)
+    local positions = {}
+    for _, b in ipairs(shape.blocks) do
+        -- The shape's (x,y) is its visual center, so we need to calculate the top-left of the bounding box first.
+        local cx, cy = getShapeOffsetCenter(shape)
+        local blockWorldX = shape.x - cx + b[1]*32
+        local blockWorldY = shape.y - cy + b[2]*32
+
+        local gridX = math.floor(blockWorldX / 32 + 0.5)
+        local gridY = math.floor(blockWorldY / 32 + 0.5)
+        table.insert(positions, {x = gridX, y = gridY})
+    end
+    return positions
+end
+
+--- Checks if all blocks of a shape are within the puzzle area.
+local function isShapeInBounds(shape)
+    local globalBlocks = getGlobalBlockGridPositions(shape)
+    for _, blockPos in ipairs(globalBlocks) do
+        local worldX = blockPos.x * 32
+        local worldY = blockPos.y * 32
+
+        if worldX < puzzleBounds.left or worldX >= puzzleBounds.right or worldY >= puzzleBounds.bottom then
+            return false -- Outside simple rectangle bounds
+        end
+        -- Check against the diagonal slope line
+        if worldY < (puzzleBounds.slope * worldX + puzzleBounds.intercept) then
+            return false -- Above the slope
+        end
+    end
+    return true
+end
+
+--- Checks if a shape is colliding with any other shapes in the list.
+local function isCollidingWithOthers(heldShape, allShapes)
+    local heldBlocks = getGlobalBlockGridPositions(heldShape)
+    for _, otherShape in ipairs(allShapes) do
+        if otherShape.id ~= heldShape.id then
+            local otherBlocks = getGlobalBlockGridPositions(otherShape)
+            for _, hb in ipairs(heldBlocks) do
+                for _, ob in ipairs(otherBlocks) do
+                    if hb.x == ob.x and hb.y == ob.y then return true end
+                end
+            end
+        end
+    end
+    return false
+end
+
 function act:load()
     self.isPlaying = false
 
-    Player:setPosition(32*(35.5 - 60), 32*(69.5 + 25)) -- for debugging -- 115.5
-    Player:setPlayable(true)
-    Player:setSpeed(390)
+    Player:setPosition(32*115.5, 32*69.5) -- for debugging -- 32*115.5, 32*69.5 -- 32*(35.5 - 70), 32*(69.5 + 25)
+    -- Player:setPlayable(true)
+    -- Player:setSpeed(390)
     Player:clearWalls()
     Player:addWall(32*135, 32*69)
     Player:addWall(32*-50, 32*94)
@@ -113,6 +178,7 @@ function act:load()
     local centerY = const.HEIGHT - 100
     self.stacko = {}
 
+    self.isWin = false
     local shapeDefs = {
         {id = "A", blocks = {{0,0},{0,1},{0,2}}},
         {id = "B", blocks = {{0,0},{0,1},{0,2},{1,0}}},
@@ -129,11 +195,13 @@ function act:load()
     local startX = centerX - (numShapes - 1) * spacing / 2
 
     for i, shapeDef in ipairs(shapeDefs) do
-        table.insert(self.stacko, {
+        local newShape = {
             id = shapeDef.id,
             blocks = shapeDef.blocks,
             x = startX + (i - 1) * spacing, y = centerY, held = false
-        })
+        }
+        newShape.lastValidX, newShape.lastValidY = newShape.x, newShape.y
+        table.insert(self.stacko, newShape)
     end
 end
 
@@ -183,27 +251,43 @@ function act:draw()
         utils.draw.fences(32*(4 -15), 32*95, 15)
         utils.draw.bricks(32*(73-12), 32*70, 12, 8)
 
-        Interactables:drawDebug()
-        Player:drawWallDebug()
-        Player:drawHotPositionDebug()
-        Player:drawTriggerDebug()
+        -- Interactables:drawDebug()
+        -- Player:drawWallDebug()
+        -- Player:drawHotPositionDebug()
+        -- Player:drawTriggerDebug()
         Player:draw()
 
+        utils.draw.dashedLine({
+            puzzleBounds.left, puzzleBounds.top,     -- top edge
+            puzzleBounds.right, puzzleBounds.top,
+
+            puzzleBounds.right, puzzleBounds.bottom, -- right edge
+            puzzleBounds.left, puzzleBounds.bottom,  -- bottom edge
+
+            puzzleBounds.left, puzzleBounds.bottom,  -- left edge (closing back)
+            puzzleBounds.left, puzzleBounds.top,
+
+            puzzleBounds.left, puzzleBounds.top,     -- diagonal line
+            puzzleBounds.right, puzzleBounds.bottom
+        }, 8, 6, 4, {1, 0.2, 0.2, 0.5})
     Camera:detach()
 
     -- draw stackos
-    for _, shape in ipairs(self.stacko) do
-        local cx, cy = getShapeOffsetCenter(shape)
-        for _, b in ipairs(shape.blocks) do
-            local bx = shape.x - cx + b[1]*32
-            local by = shape.y - cy + b[2]*32
-            love.graphics.setColor(0.5, 0.5, 0.5)
-            love.graphics.rectangle("fill", bx, by, 32, 32)
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.rectangle("line", bx, by, 32, 32)
+    if self.isPlaying then
+        love.graphics.setLineWidth(3)
+        for _, shape in ipairs(self.stacko) do
+            local cx, cy = getShapeOffsetCenter(shape)
+            for _, b in ipairs(shape.blocks) do
+                local bx = shape.x - cx + b[1]*32
+                local by = shape.y - cy + b[2]*32
+                love.graphics.setColor(0.5, 0.5, 0.5)
+                love.graphics.rectangle("fill", bx, by, 32, 32)
+                love.graphics.setColor(0, 0, 0)
+                love.graphics.rectangle("line", bx, by, 32, 32)
+            end
         end
+        love.graphics.setColor(1, 1, 1)
     end
-    love.graphics.setColor(1, 1, 1)
 end
 
 function act:mousepressed(x, y, button, _, _)
@@ -224,6 +308,8 @@ function act:mousepressed(x, y, button, _, _)
                 -- Move the held shape to the end of the table so it's drawn on top
                 table.remove(self.stacko, i)
                 table.insert(self.stacko, self.heldStacko)
+                -- Store its last valid position in case of an invalid drop
+                self.heldStacko.lastValidX, self.heldStacko.lastValidY = self.heldStacko.x, self.heldStacko.y
                 return
             end
         end
@@ -231,15 +317,47 @@ function act:mousepressed(x, y, button, _, _)
 end
 
 function act:mousereleased(x, y, button, _, _)
-    if button == 1 and self.heldStacko then
-        -- Snap to grid on release
-        self.heldStacko.x = math.floor(self.heldStacko.x / 32 + 0.5) * 32 - 0
-        self.heldStacko.y = math.floor(self.heldStacko.y / 32 + 0.5) * 32 - 0
-        self.heldStacko = nil
+    if button ~= 1 or not self.heldStacko then return end
+
+    -- Fix the inconsistent snap by aligning the first block to the grid
+    local cx, cy = getShapeOffsetCenter(self.heldStacko)
+    local firstBlock = self.heldStacko.blocks[1]
+    local firstBlockWorldX = self.heldStacko.x - cx + firstBlock[1]*32
+    local firstBlockWorldY = self.heldStacko.y - cy + firstBlock[2]*32
+
+    local targetBlockX = math.floor(firstBlockWorldX / 32 + 0.5) * 32
+    local targetBlockY = math.floor(firstBlockWorldY / 32 + 0.5) * 32
+
+    local deltaX = targetBlockX - firstBlockWorldX
+    local deltaY = targetBlockY - firstBlockWorldY
+
+    self.heldStacko.x = self.heldStacko.x + deltaX
+    self.heldStacko.y = self.heldStacko.y + deltaY
+
+    -- Check for collisions and bounds
+    if isCollidingWithOthers(self.heldStacko, self.stacko) or not isShapeInBounds(self.heldStacko) then
+        -- Invalid placement, revert to last known good position
+        self.heldStacko.x, self.heldStacko.y = self.heldStacko.lastValidX, self.heldStacko.lastValidY
+    else
+        -- Valid placement, check for win condition
+        self:checkWinCondition()
     end
+
+    self.heldStacko = nil
 end
 
-function act:keypressed(key, _)
+function act:checkWinCondition()
+    for _, shape in ipairs(self.stacko) do
+        if not isShapeInBounds(shape) then
+            self.isWin = false
+            return -- At least one shape is not in the puzzle area
+        end
+    end
+    -- If we get here, all shapes are in the puzzle area
+    self.isWin = true
+    print("YOU WIN!") -- For debugging
 end
+
+function act:keypressed(key, _) end
 
 return act
